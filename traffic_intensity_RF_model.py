@@ -9,8 +9,9 @@ Created on Mon Mar 23 11:49:26 2020
 Perform a classification/regression using a Random Forest:
 - We predict a target traffic intensity level in a unit location at a specific time interval. 
 - We adopt the following types of features: 1) time features, such as hour, day-of-week,
-  and week; 2) spatial features, such as location_id; 3) rain (precipitation); 4) Context such
-  as holidays, sporting events, construction, etc.  
+  and week; 2) spatial features, such as location_id; 3) rain (precipitation);   
+  4) traffic features such as average hourly traffic speed
+  5) Context such as holidays, sporting events, construction, etc.  
 """
 
 #%% IMPORT LIBRARIES
@@ -229,13 +230,39 @@ plt.xlabel("Traffic Intensity: Target")
 plt.ylabel("Traffic Intensity: Predictions")
 plt.show()
 
-#%% FEATURE IMPORTANCE
+#%% FEATURE IMPORTANCE 
+# FOR TRAINING SET
 
 rf_rgr = RandomForestRegressor(n_estimators=500, random_state=42)
 rf_rgr.fit(X_train, y_train)
-print("Accuracy on test data: {:.2f}".format(rf_rgr.score(X_test, y_test)))
+print("Accuracy on train data: {:.2f}".format(rf_rgr.score(X_train, y_train)))
 
 result = permutation_importance(rf_rgr, X_train, y_train, n_repeats=5, n_jobs=-1, random_state=42)
+ 
+perm_sorted_idx = result.importances_mean.argsort()
+
+tree_importance_sorted_idx = np.argsort(rf_rgr.feature_importances_)
+tree_indices = np.arange(0, len(rf_rgr.feature_importances_)) + 0.5
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
+ax1.barh(tree_indices,
+         rf_rgr.feature_importances_[tree_importance_sorted_idx], height=0.7)
+ax1.set_yticklabels(features_names[tree_importance_sorted_idx])
+ax1.set_yticks(tree_indices)
+ax1.set_ylim((0, len(rf_rgr.feature_importances_)))
+ax2.boxplot(result.importances[perm_sorted_idx].T, vert=False,
+            labels=features_names[perm_sorted_idx])
+fig.tight_layout()
+plt.show()
+
+
+#%% FEATURE IMPORTANCE 
+# FOR TEST SET
+
+rf_rgr.fit(X_test, y_test)
+print("Accuracy on test data: {:.2f}".format(rf_rgr.score(X_test, y_test)))
+
+result = permutation_importance(rf_rgr, X_test, y_test, n_repeats=5, n_jobs=-1, random_state=42)
  
 perm_sorted_idx = result.importances_mean.argsort()
 
