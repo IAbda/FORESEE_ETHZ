@@ -22,8 +22,51 @@ rate_fh = @(t) (mag+lambda.*sin(t).^expon + sin(2*pi*short_freq*t).^expon);
 
 
 
-%%
+%% Location
 loc_ID = repmat([0:max_locations-1]',meshSize,1);
+
+XY = [40.397555	-3.743121
+40.384048	-3.723542
+40.365236	-3.694193
+40.380978	-3.691503
+40.388431	-3.699452
+40.406686	-3.711931
+40.408923	-3.692114
+40.394112	-3.694438
+40.408457	-3.692114
+40.428233	-3.649202];
+
+X_ID = repmat(XY(:,1),meshSize,1);
+Y_ID = repmat(XY(:,2),meshSize,1);
+
+
+%% ROAD DIRECTION
+
+% To or from center direction. Other labels could be used if necessary
+Road_dir = {
+'TO_CENTER';
+'AWAY_FROM_CENTER';
+'TO_CENTER';
+'TO_CENTER';
+'AWAY_FROM_CENTER';
+'AWAY_FROM_CENTER';
+'TO_CENTER';
+'TO_CENTER';
+'AWAY_FROM_CENTER';
+'TO_CENTER';
+};
+
+Road_direction = repmat(Road_dir,meshSize,1);
+
+
+%% NUMBER OF LANES
+
+% Other number of lanes distribution could be used for each section
+Numlanes = [1;2;4;1;2;4;2;2;1;1];
+Number_of_lanes = repmat(Numlanes,meshSize,1);
+
+
+%% Time
 hours = repmat(repelem([0:numhoursperday-1]',max_locations) , numdaysperweek*numweeksperyear , 1);
 days = repmat(repelem([1:numdaysperweek]',numhoursperday*max_locations) , numweeksperyear , 1);
 weeks = repelem([1:numweeksperyear]',numhoursperday*numdaysperweek*max_locations);
@@ -95,9 +138,12 @@ id4 = find(weeks == 32);
 id5 = find(weeks == 33);
 id6 = find(weeks == 34);
 ids = [id0;id1;id2;id3;id4;id5;id6];
+Context(ids) = {'HOLIDAY'};
 
-Context(ids) = {'HOLIDAYS'};
-
+% ACCIDENTS
+% Say 200 accidents occured all hours of a year
+ida = randsample(length(loc_ID),200);
+Context(ida) = {'ACCIDENT'};
 
 
 %% TRAFFIC SPEED
@@ -134,6 +180,11 @@ idx = strcmp(Context,'SPORTS');
 idx = find(idx==1);
 traffic_speed(idx) = traffic_speed(idx)./random('uniform',1,2,length(idx),1); 
 
+idx = strcmp(Context,'ACCIDENT');
+idx = find(idx==1);
+traffic_speed(idx) = traffic_speed(idx)./random('uniform',11,20,length(idx),1); 
+
+
 % Effect of precipitation
 thresholdrain1 = 5;
 thresholdrain2 = 12;
@@ -142,81 +193,101 @@ traffic_speed(idx) = traffic_speed(idx)./random('uniform',1,2,length(idx),1);
 idx = find(precipitation_rate>=thresholdrain2);
 traffic_speed(idx) = traffic_speed(idx)./random('uniform',5,10,length(idx),1); 
 
-traffic_speed(traffic_speed<=5) = 0; 
+traffic_speed(traffic_speed<=5) = 5; 
 
 figure, plot(loc_ID,traffic_speed,'o')
 figure, plot(precipitation_rate,traffic_speed,'o')
 
 
-%% TRAFFIC INTENSITY at T-60min:  cars per hour
+%% TRAFFIC INTENSITY at Time t+60min:  cars per hour
 avg_traffic_intensity = 2000; % cars/h/location over a week
-traffic_intensity = ones(length(loc_ID),1).*avg_traffic_intensity.*random('normal',1,0.2,length(loc_ID),1);
+traffic_intensity_plus_60min = ones(length(loc_ID),1).*avg_traffic_intensity.*random('normal',1,0.2,length(loc_ID),1);
 
 id = find(loc_ID == 2 | loc_ID == 5 | loc_ID == 6);
-traffic_intensity(id) = traffic_intensity(id).*1.75;
+traffic_intensity_plus_60min(id) = traffic_intensity_plus_60min(id).*1.75;
 
 id = find(loc_ID == 9);
-traffic_intensity(id) = traffic_intensity(id).*1.25;
+traffic_intensity_plus_60min(id) = traffic_intensity_plus_60min(id).*1.25;
 
-figure, plot(loc_ID,traffic_intensity,'o')
+figure, plot(loc_ID,traffic_intensity_plus_60min,'o')
 
 
 % Intensity drops by half on the weekend
 id = find(days >= 6 & days <= 7);
-traffic_intensity(id) = traffic_intensity(id)./2;
+traffic_intensity_plus_60min(id) = traffic_intensity_plus_60min(id)./2;
 
 % Normally higher at certain hours of the day
 id = find(hours < 6);
-traffic_intensity(id) = traffic_intensity(id)./2;
+traffic_intensity_plus_60min(id) = traffic_intensity_plus_60min(id)./2;
 id = find(hours >= 21);
-traffic_intensity(id) = traffic_intensity(id)./1.5;
+traffic_intensity_plus_60min(id) = traffic_intensity_plus_60min(id)./1.5;
 
 id = find(hours > 10 & hours <= 16);
-traffic_intensity(id) = traffic_intensity(id)./1.25;
+traffic_intensity_plus_60min(id) = traffic_intensity_plus_60min(id)./1.25;
 
-figure, plot(days,traffic_intensity,'o')
-figure, plot(hours,traffic_intensity,'o')
+figure, plot(days,traffic_intensity_plus_60min,'o')
+figure, plot(hours,traffic_intensity_plus_60min,'o')
 
 % Effect of context
 idx = strcmp(Context,'CONSTRUCTION');
 idx = find(idx==1);
-traffic_intensity(idx) = traffic_intensity(idx)./random('uniform',5,10,length(idx),1); 
+traffic_intensity_plus_60min(idx) = traffic_intensity_plus_60min(idx)./random('uniform',5,10,length(idx),1); 
 
 idx = strcmp(Context,'CARNIVAL');
 idx = find(idx==1);
-traffic_intensity(idx) = traffic_intensity(idx)./random('uniform',5,10,length(idx),1); 
+traffic_intensity_plus_60min(idx) = traffic_intensity_plus_60min(idx)./random('uniform',5,10,length(idx),1); 
 
 idx = strcmp(Context,'HOLIDAYS');
 idx = find(idx==1);
-traffic_intensity(idx) = traffic_intensity(idx)./random('uniform',1,5,length(idx),1); 
+traffic_intensity_plus_60min(idx) = traffic_intensity_plus_60min(idx)./random('uniform',1,5,length(idx),1); 
 
 idx = strcmp(Context,'SPORTS');
 idx = find(idx==1);
-traffic_intensity(idx) = traffic_intensity(idx)./random('uniform',1,2,length(idx),1); 
+traffic_intensity_plus_60min(idx) = traffic_intensity_plus_60min(idx)./random('uniform',1,2,length(idx),1); 
+
+idx = strcmp(Context,'ACCIDENT');
+idx = find(idx==1);
+traffic_intensity_plus_60min(idx) = traffic_intensity_plus_60min(idx)./random('uniform',11,20,length(idx),1); 
+
 
 % Effect of precipitation
-traffic_intensity(traffic_intensity<=0) = 0; 
+traffic_intensity_plus_60min(traffic_intensity_plus_60min<=0) = 0; 
 thresholdrain1 = 5;
 thresholdrain2 = 12;
 idx = find(precipitation_rate>=thresholdrain1 & precipitation_rate<thresholdrain2);
-traffic_intensity(idx) = traffic_intensity(idx)./random('uniform',1,2,length(idx),1); 
+traffic_intensity_plus_60min(idx) = traffic_intensity_plus_60min(idx)./random('uniform',1,2,length(idx),1); 
 idx = find(precipitation_rate>=thresholdrain2);
-traffic_intensity(idx) = traffic_intensity(idx)./random('uniform',5,10,length(idx),1); 
+traffic_intensity_plus_60min(idx) = traffic_intensity_plus_60min(idx)./random('uniform',5,10,length(idx),1); 
 
-traffic_intensity(traffic_intensity<=5) = 0; 
-figure, plot(loc_ID,traffic_intensity,'o')
-figure, plot(precipitation_rate,traffic_intensity,'o')
-figure, plot(traffic_speed,traffic_intensity,'o')
+traffic_intensity_plus_60min(traffic_intensity_plus_60min<=5) = 0; 
+figure, plot(loc_ID,traffic_intensity_plus_60min,'o')
+figure, plot(precipitation_rate,traffic_intensity_plus_60min,'o')
+figure, plot(traffic_speed,traffic_intensity_plus_60min,'o')
+
+
+%% TRAFFIC INTENSITY at Time - 60min:  cars per hour
+
+traffic_intensity_minus_60min = traffic_intensity_plus_60min(1:end-max_locations);
+traffic_intensity_minus_60min = [traffic_intensity_plus_60min(1:max_locations).*1.15;traffic_intensity_minus_60min];
+
+%% TRAFFIC INTENSITY at Time - 120min:  cars per hour
+
+traffic_intensity_minus_120min = traffic_intensity_minus_60min(1:end-max_locations);
+traffic_intensity_minus_120min = [traffic_intensity_minus_60min(1:max_locations).*1.15;traffic_intensity_minus_120min];
 
 
 %%
-varNames = {'loc_ID' , 'hours' , 'days' , 'Weeks' , 'precipitation_rate_mm'};
-Xint = [loc_ID , hours , days , weeks , precipitation_rate];
+varNames = {'loc_ID' , 'X_ID' , 'Y_ID' , 'Number_of_lanes' , 'hours' , 'days' , 'Weeks' , 'precipitation_rate_mm'};
+Xint = [loc_ID , X_ID , Y_ID , Number_of_lanes , hours , days , weeks , precipitation_rate];
 
 OutGenTrafficSyntheticSamples = array2table(Xint,'VariableNames',varNames);
 
+OutGenTrafficSyntheticSamples.Road_direction = Road_direction;
+
 OutGenTrafficSyntheticSamples.Context = Context;
-OutGenTrafficSyntheticSamples.traffic_speed = traffic_speed;
-OutGenTrafficSyntheticSamples.traffic_intensity = traffic_intensity;
+OutGenTrafficSyntheticSamples.traffic_speed = ceil(traffic_speed);
+OutGenTrafficSyntheticSamples.traffic_intensity_minus_120min = ceil(traffic_intensity_minus_120min);
+OutGenTrafficSyntheticSamples.traffic_intensity_minus_60min  = ceil(traffic_intensity_minus_60min);
+OutGenTrafficSyntheticSamples.traffic_intensity_plus_60min   = ceil(traffic_intensity_plus_60min);
 
 writetable(OutGenTrafficSyntheticSamples,'./Data/OutGenTrafficSyntheticSamples.csv') 
