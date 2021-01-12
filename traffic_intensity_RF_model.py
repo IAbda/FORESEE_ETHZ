@@ -33,6 +33,7 @@ from sklearn import preprocessing
 from sklearn.model_selection import StratifiedKFold, TimeSeriesSplit, GridSearchCV, RandomizedSearchCV, KFold, cross_validate
 from sklearn.pipeline import Pipeline
 from scipy.stats import randint
+import pickle
 
 from convert_csv_to_json import make_json
 from plot_map import make_plot_map
@@ -514,13 +515,17 @@ def RF_Regressor_randomizedsearch_cross_validate(model,X,y,cv):
 
 def main():
     
-    # Specify input data file  
-    # Original client data is specified in a CSV file. 
-    # Clients are familiar with such a file type and format
+    # Specify input data file:  
+    #   Original client data is specified in a CSV file. 
+    #   Clients are familiar with such a file type and format
     csvFilePath = "./Data/OutGenTrafficSyntheticSamples.csv"
     # We will convert the csv file to json file
     jsonFilePath = "./Data/OutGenTrafficSyntheticSamples.json"
     
+    # initialize internal variables
+    print('Initialize variables')
+    initialize_vars()
+
     # Call the make_json function 
     # Convert the csv to json
     print('Convert raw CSV to json')
@@ -530,29 +535,37 @@ def main():
     # Import dataset from json file, and convert to dataframe
     print('Import dataset')
     dataset = load_parse_json(jsonFilePath)
-        
-    # initialize internal variables
-    print('Initialize variables')
-    initialize_vars()
-    
+            
     # Plot map with road locations
     make_plot_map(dataset,n_locations)    
     
+    # Feature engineer input features
+    print('Feature engineer input features')
+    dataset, features_names, LABEL = feature_engineer_input(dataset, time_to_cyclic, do_feature_scaling)
+
+    # Split features into test and train sets
+    print('Split features into test and train sets')
+    test_size = 0.3;
+    X, y, X_train, X_test, y_train, y_test = split_data_test_train(dataset, test_size)
+
+    # Random Forest regressor with default parameters
+    print('Random Forest regressor with default parameters')    
+    RF_model = RF_Regressor(X_train,X_test,y_train,y_test)
+
+
+    # save the model to disk with pickle
+    print('Save to file model: Random Forest regressor with default parameters')    
+    filename_to_save = './Saved_Models/Random_Forest_Regressor_with_Default_Parameters.sav'
+    pickle.dump(RF_model, open(filename_to_save, 'wb'))
+    # load the model from disk
+    loaded_model = pickle.load(open(filename, 'rb'))
+    score_result = loaded_model.score(X_test, Y_test)
+    print(score_result)
+    ypredict_from_loaded_model = loaded_model.predict(X_test)
+    print(ypredict_from_loaded_model)
 
 
 
-    # # Feature engineer input features
-    # print('Feature engineer input features')
-    # dataset, features_names, LABEL = feature_engineer_input(dataset, time_to_cyclic, do_feature_scaling)
-
-    # # Split features into test and train sets
-    # print('Split features into test and train sets')
-    # test_size = 0.3;
-    # X, y, X_train, X_test, y_train, y_test = split_data_test_train(dataset, test_size)
-
-    # # Random Forest regressor with default parameters
-    # print('Random Forest regressor with default parameters')    
-    # RF_model = RF_Regressor(X_train,X_test,y_train,y_test)
 
     # # Feature importance 
     # print('Feature importance')    
