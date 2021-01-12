@@ -26,6 +26,7 @@ def load_parse_json(jsonFilePath):
 
     with open(jsonFilePath) as f:
         data = json.load(f)        
+    # Convert dict to dataframe    
     dataset = pd.DataFrame.from_dict(data)    
     print(dataset)
 

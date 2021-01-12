@@ -512,7 +512,7 @@ def RF_Regressor_randomizedsearch_cross_validate(model,X,y,cv):
 #%% MAIN
 
 
-#def main():
+def main():
     
     # Specify input data file  
     # Original client data is specified in a CSV file. 
@@ -523,19 +523,18 @@ def RF_Regressor_randomizedsearch_cross_validate(model,X,y,cv):
     
     # Call the make_json function 
     # Convert the csv to json
+    print('Convert raw CSV to json')
     make_json(csvFilePath, jsonFilePath)
         
 
-    # Import dataset from json file
+    # Import dataset from json file, and convert to dataframe
     print('Import dataset')
     dataset = load_parse_json(jsonFilePath)
-    
-    
+        
     # initialize internal variables
     print('Initialize variables')
     initialize_vars()
     
-
     # Plot map with road locations
     make_plot_map(dataset,n_locations)    
     
@@ -576,13 +575,11 @@ def RF_Regressor_randomizedsearch_cross_validate(model,X,y,cv):
     # RF_Regressor_randomizedsearch_cross_validate(best_rfc_random,X,y,cv)
 
 
-"""
 #%% RUN MAIN
 if __name__ == "__main__":
 
     # Call main function
     main()
-"""  
     
 
     

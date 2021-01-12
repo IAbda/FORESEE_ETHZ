@@ -9,7 +9,8 @@ Created on Tue Jan 12 08:50:36 2021
 #%% IMPORT LIBRARIES
 
 import matplotlib.pyplot as plt
- 
+import pandas as pd
+
 
 #%% FUNCTION TO CONVERT CSV TO JSON 
 """
@@ -23,9 +24,9 @@ FUNCTION TO PLOT MAP
 # Function to convert a CSV to JSON 
 # Takes the file paths as arguments 
 def make_plot_map(dataset,n_locations):
-    xcoord = dataset.X_ID[0:n_locations]; 
-    ycoord = dataset.Y_ID[0:n_locations]; 
-    locID  = dataset.loc_ID[0:n_locations];
+    xcoord = pd.to_numeric(dataset.X_ID[0:n_locations]); 
+    ycoord = pd.to_numeric(dataset.Y_ID[0:n_locations]); 
+    locID  = pd.to_numeric(dataset.loc_ID[0:n_locations]);
     s = 50
     a = 0.4
     fig, ax = plt.subplots()
