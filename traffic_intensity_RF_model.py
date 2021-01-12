@@ -33,7 +33,7 @@ from sklearn import preprocessing
 from sklearn.model_selection import StratifiedKFold, TimeSeriesSplit, GridSearchCV, RandomizedSearchCV, KFold, cross_validate
 from sklearn.pipeline import Pipeline
 from scipy.stats import randint
-
+from convert_csv_to_json import make_json
 
 #%% INITIALIZE SOME VARIABLES
 """
@@ -534,7 +534,7 @@ def main():
     # Feature importance 
     print('Feature importance')    
     feature_importance(RF_model, X_test, y_test, features_names)
-
+    
     print('Cross-validation of Random Forest regressor')    
     # Cross-validation approach
     # cv = KFold(n_splits)
@@ -554,9 +554,35 @@ def main():
 
 # RUN MAIN
 if __name__ == "__main__":
-    main()
+
+    # Input data file    
+    csvFilePath = "./Data/OutGenTrafficSyntheticSamples.csv"
+    # We will convert the csv file to json file
+    jsonFilePath = "./Data/OutGenTrafficSyntheticSamples.json"
     
+    # Call the make_json function 
+    make_json(csvFilePath, jsonFilePath)
     
+    # initialize variables
+    print('Initialize variables')
+    initialize_vars()
+    
+    # Import dataset
+    print('Import dataset')    
+    dataset = import_dataset(csvFilePath)
+    
+    xcoord = dataset.X_ID; 
+    ycoord = dataset.Y_ID; 
+    locID  = dataset.loc_ID;
+    s = 50
+    a = 0.4
+    fig, ax = plt.subplots()
+    ax.scatter(xcoord, ycoord, edgecolor='k',
+                c="r", s=s, marker="o", alpha=a)
+    plt.xlabel("Xcoord")
+    plt.ylabel("Ycoord")
+    for i, txt in enumerate(locID):
+        ax.annotate(txt, (xcoord[i]+0.001, ycoord[i]+0.002))
     
 #%%
 

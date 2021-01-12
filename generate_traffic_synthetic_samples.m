@@ -31,7 +31,7 @@ XY = [40.397555	-3.743121
 40.380978	-3.691503
 40.388431	-3.699452
 40.406686	-3.711931
-40.408923	-3.692114
+40.408923	-3.682114
 40.394112	-3.694438
 40.408457	-3.692114
 40.428233	-3.649202];
@@ -286,8 +286,8 @@ OutGenTrafficSyntheticSamples.Road_direction = Road_direction;
 
 OutGenTrafficSyntheticSamples.Context = Context;
 OutGenTrafficSyntheticSamples.traffic_speed = ceil(traffic_speed);
-OutGenTrafficSyntheticSamples.traffic_intensity_minus_120min = ceil(traffic_intensity_minus_120min);
-OutGenTrafficSyntheticSamples.traffic_intensity_minus_60min  = ceil(traffic_intensity_minus_60min);
+% OutGenTrafficSyntheticSamples.traffic_intensity_minus_120min = ceil(traffic_intensity_minus_120min);
+% OutGenTrafficSyntheticSamples.traffic_intensity_minus_60min  = ceil(traffic_intensity_minus_60min);
 OutGenTrafficSyntheticSamples.traffic_intensity_plus_60min   = ceil(traffic_intensity_plus_60min);
 
 writetable(OutGenTrafficSyntheticSamples,'./Data/OutGenTrafficSyntheticSamples.csv') 
