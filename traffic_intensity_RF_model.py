@@ -33,7 +33,11 @@ from sklearn import preprocessing
 from sklearn.model_selection import StratifiedKFold, TimeSeriesSplit, GridSearchCV, RandomizedSearchCV, KFold, cross_validate
 from sklearn.pipeline import Pipeline
 from scipy.stats import randint
+
 from convert_csv_to_json import make_json
+from plot_map import make_plot_map
+from load_parse_json import load_parse_json
+
 
 #%% INITIALIZE SOME VARIABLES
 """
@@ -508,162 +512,78 @@ def RF_Regressor_randomizedsearch_cross_validate(model,X,y,cv):
 #%% MAIN
 
 
-def main():
-    # initialize variables
-    print('Initialize variables')
-    initialize_vars()
+#def main():
     
-    # Import dataset
-    print('Import dataset')
-    filename = "./Data/OutGenTrafficSyntheticSamples.csv"
-    dataset = import_dataset(filename)
-    
-    # Feature engineer input features
-    print('Feature engineer input features')
-    dataset, features_names, LABEL = feature_engineer_input(dataset, time_to_cyclic, do_feature_scaling)
-
-    # Split features into test and train sets
-    print('Split features into test and train sets')
-    test_size = 0.3;
-    X, y, X_train, X_test, y_train, y_test = split_data_test_train(dataset, test_size)
-
-    # Random Forest regressor with default parameters
-    print('Random Forest regressor with default parameters')    
-    RF_model = RF_Regressor(X_train,X_test,y_train,y_test)
-
-    # Feature importance 
-    print('Feature importance')    
-    feature_importance(RF_model, X_test, y_test, features_names)
-    
-    print('Cross-validation of Random Forest regressor')    
-    # Cross-validation approach
-    # cv = KFold(n_splits)
-    cv = StratifiedKFold(n_splits,shuffle=True,random_state=42)
-    # cv = TimeSeriesSplit(n_splits=n_splits) # creating a timeseries split of the datasets
-
-    # Cross-validation of the Random Forest regressor with default parameters
-    RF_Regressor_cross_validate(RF_model,X,y,cv) 
-
-    # best RF model with randomizedsearch
-    print('best RF model with randomizedsearch')    
-    best_rfc_random = RF_Regressor_randomizedsearch(X_train,X_test,y_train,y_test,cv)
-
-    print('Cross-validation of best RF model with randomizedsearch')    
-    RF_Regressor_randomizedsearch_cross_validate(best_rfc_random,X,y,cv)
-
-
-# RUN MAIN
-if __name__ == "__main__":
-
-    # Input data file    
+    # Specify input data file  
+    # Original client data is specified in a CSV file. 
+    # Clients are familiar with such a file type and format
     csvFilePath = "./Data/OutGenTrafficSyntheticSamples.csv"
     # We will convert the csv file to json file
     jsonFilePath = "./Data/OutGenTrafficSyntheticSamples.json"
     
     # Call the make_json function 
+    # Convert the csv to json
     make_json(csvFilePath, jsonFilePath)
+        
+
+    # Import dataset from json file
+    print('Import dataset')
+    dataset = load_parse_json(jsonFilePath)
     
-    # initialize variables
+    
+    # initialize internal variables
     print('Initialize variables')
     initialize_vars()
     
-    # Import dataset
-    print('Import dataset')    
-    dataset = import_dataset(csvFilePath)
+
+    # Plot map with road locations
+    make_plot_map(dataset,n_locations)    
     
-    xcoord = dataset.X_ID; 
-    ycoord = dataset.Y_ID; 
-    locID  = dataset.loc_ID;
-    s = 50
-    a = 0.4
-    fig, ax = plt.subplots()
-    ax.scatter(xcoord, ycoord, edgecolor='k',
-                c="r", s=s, marker="o", alpha=a)
-    plt.xlabel("Xcoord")
-    plt.ylabel("Ycoord")
-    for i, txt in enumerate(locID):
-        ax.annotate(txt, (xcoord[i]+0.001, ycoord[i]+0.002))
+
+
+
+    # # Feature engineer input features
+    # print('Feature engineer input features')
+    # dataset, features_names, LABEL = feature_engineer_input(dataset, time_to_cyclic, do_feature_scaling)
+
+    # # Split features into test and train sets
+    # print('Split features into test and train sets')
+    # test_size = 0.3;
+    # X, y, X_train, X_test, y_train, y_test = split_data_test_train(dataset, test_size)
+
+    # # Random Forest regressor with default parameters
+    # print('Random Forest regressor with default parameters')    
+    # RF_model = RF_Regressor(X_train,X_test,y_train,y_test)
+
+    # # Feature importance 
+    # print('Feature importance')    
+    # feature_importance(RF_model, X_test, y_test, features_names)
     
-#%%
+    # print('Cross-validation of Random Forest regressor')    
+    # # Cross-validation approach
+    # # cv = KFold(n_splits)
+    # cv = StratifiedKFold(n_splits,shuffle=True,random_state=42)
+    # # cv = TimeSeriesSplit(n_splits=n_splits) # creating a timeseries split of the datasets
 
-# from numpy import asarray
-# from pandas import read_csv
-# from pandas import DataFrame
-# from pandas import concat
-# from sklearn.metrics import mean_absolute_error
-# from sklearn.ensemble import RandomForestRegressor
-# from matplotlib import pyplot
+    # # Cross-validation of the Random Forest regressor with default parameters
+    # RF_Regressor_cross_validate(RF_model,X,y,cv) 
+
+    # # best RF model with randomizedsearch
+    # print('best RF model with randomizedsearch')    
+    # best_rfc_random = RF_Regressor_randomizedsearch(X_train,X_test,y_train,y_test,cv)
+
+    # print('Cross-validation of best RF model with randomizedsearch')    
+    # RF_Regressor_randomizedsearch_cross_validate(best_rfc_random,X,y,cv)
 
 
-# # transform a time series dataset into a supervised learning dataset
-# def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
-# 	n_vars = 1 if type(data) is list else data.shape[1]
-# 	df = DataFrame(data)
-# 	cols = list()
-# 	# input sequence (t-n, ... t-1)
-# 	for i in range(n_in, 0, -1):
-# 		cols.append(df.shift(i))
-# 	# forecast sequence (t, t+1, ... t+n)
-# 	for i in range(0, n_out):
-# 		cols.append(df.shift(-i))
-# 	# put it all together
-# 	agg = concat(cols, axis=1)
-# 	# drop rows with NaN values
-# 	if dropnan:
-# 		agg.dropna(inplace=True)
-# 	return agg.values
+"""
+#%% RUN MAIN
+if __name__ == "__main__":
 
-# # split a univariate dataset into train/test sets
-# def train_test_split(data, n_test):
-# 	return data[:-n_test, :], data[-n_test:, :]
+    # Call main function
+    main()
+"""  
+    
 
-# # fit an random forest model and make a one step prediction
-# def random_forest_forecast(train, testX):
-# 	# transform list into array
-# 	train = asarray(train)
-# 	# split into input and output columns
-# 	trainX, trainy = train[:, :-1], train[:, -1]
-# 	# fit model
-# 	model = RandomForestRegressor(n_estimators=1000)
-# 	model.fit(trainX, trainy)
-# 	# make a one-step prediction
-# 	yhat = model.predict([testX])
-# 	return yhat[0]
-
-# # walk-forward validation for univariate data
-# def walk_forward_validation(data, n_test):
-# 	predictions = list()
-# 	# split dataset
-# 	train, test = train_test_split(data, n_test)
-# 	# seed history with training dataset
-# 	history = [x for x in train]
-# 	# step over each time-step in the test set
-# 	for i in range(len(test)):
-# 		# split test row into input and output columns
-# 		testX, testy = test[i, :-1], test[i, -1]
-# 		# fit model on history and make a prediction
-# 		yhat = random_forest_forecast(history, testX)
-# 		# store forecast in list of predictions
-# 		predictions.append(yhat)
-# 		# add actual observation to history for the next loop
-# 		history.append(test[i])
-# 		# summarize progress
-# 		print('>expected=%.1f, predicted=%.1f' % (testy, yhat))
-# 	# estimate prediction error
-# 	error = mean_absolute_error(test[:, -1], predictions)
-# 	return error, test[:, -1], predictions
-
-# # load the dataset
-# series = read_csv('./Data/daily-total-female-births.csv', header=0, index_col=0)
-# values = series.values
-# # transform the time series data into supervised learning
-# data = series_to_supervised(values, n_in=6)
-# # evaluate
-# mae, y, yhat = walk_forward_validation(data, 4)
-# print('MAE: %.3f' % mae)
-# # plot expected vs predicted
-# pyplot.plot(y, label='Expected')
-# pyplot.plot(yhat, label='Predicted')
-# pyplot.legend()
-# pyplot.show()
+    
 

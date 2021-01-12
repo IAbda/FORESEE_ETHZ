@@ -39,11 +39,11 @@ def make_json(file, json_file):
        # function to dump data     
         with open(json_file, "w") as f:
             f.write(json.dumps(csv_rows, sort_keys=False, indent=4, separators=(',', ': '))) #for pretty
-            f.write(json.dumps(csv_rows))
+            #f.write(json.dumps(csv_rows))
 
 
 #%% Driver Code 
-  
+"""  
 # Decide the two file paths according to your  
 # computer system 
 csvFilePath = "./Data/OutGenTrafficSyntheticSamples.csv"
@@ -51,4 +51,4 @@ jsonFilePath = "./Data/OutGenTrafficSyntheticSamples.json"
   
 # Call the make_json function 
 make_json(csvFilePath, jsonFilePath)
-
+"""
