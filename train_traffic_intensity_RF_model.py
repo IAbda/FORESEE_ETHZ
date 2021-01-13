@@ -29,36 +29,22 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 from sklearn.metrics import plot_roc_curve
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.inspection import permutation_importance
-from sklearn import preprocessing
 from sklearn.model_selection import StratifiedKFold, TimeSeriesSplit, GridSearchCV, RandomizedSearchCV, KFold, cross_validate
 from sklearn.pipeline import Pipeline
 from scipy.stats import randint
 import pickle
 
+from import_dataset import import_dataset
 from convert_csv_to_json import make_json
 from plot_map import make_plot_map
 from load_parse_json import load_parse_json
 from predict_from_saved_RF_model import predict_from_saved_RF_model
 from save_RF_model_to_disk import save_RF_model_to_disk
+from feature_engineer_input import feature_engineer_input
+from initialize_vars import initialize_vars
+from feature_scaling import feature_scaling
 
 
-
-#%% INITIALIZE SOME VARIABLES
-"""
------------------------------------------------------------------
-
-INITIALIZE SOME VARIABLES      
-
------------------------------------------------------------------
-"""
-
-def initialize_vars():
-    # global shit is probably a recipe for future disaster, but whatever...
-    global do_feature_scaling, time_to_cyclic, n_splits, n_locations
-    do_feature_scaling = True
-    time_to_cyclic = False
-    n_splits = 10; # FOR CROSS-VALIDATION
-    n_locations = 10; # NUMBER OF ROAD SECTIONS
 
 
 #%% Prediction metrics scores       
@@ -82,142 +68,6 @@ def Average_Traffic_Intensity_Error(model, test_features, test_labels):
     return accuracy
 
 
-
-#%%
-"""
------------------------------------------------------------------
-FEATURE SCALING:
-We know our dataset is not yet a scaled value. Therefore, 
-it would be beneficial to scale our data (although, this step isn't as important 
-for the random forests algorithm). 
------------------------------------------------------------------
-"""
-
-# (OPTIONAL) Feature Scaling
-def feature_scaling(X):
-    scaled_X = preprocessing.normalize(X)
-    # sc = preprocessing.StandardScaler()
-    # scaled_X = sc.fit_transform(X)
-    return scaled_X
-
-
-
-#%% IMPORT THE DATA
-
-"""
------------------------------------------------------------------
-
-IMPORT THE DATA
-
------------------------------------------------------------------
-"""
-
-def import_dataset(filename):
-    # Import the data with Panda
-    dataset = pd.read_csv("./data/OutGenTrafficSyntheticSamples.csv")
-    print(dataset)
-    
-    return dataset
-	
-
-
-
-#%% FEATURE ENGINEER SOME OF THE INPUT PARAMETERS
-"""
------------------------------------------------------------------
-
-FEATURE ENGINEER SOME OF THE INPUT PARAMETERS
-
------------------------------------------------------------------
-"""
-
-def feature_engineer_input(dataset, time_to_cyclic, do_feature_scaling):        
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    # ONE-HOT-ENCODING of categorical features
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    # Get one hot encoding of columns "Context"
-    FEATTMP = pd.get_dummies(dataset.Context, prefix='Context')
-    # Drop column Context as it is now encoded
-    dataset = dataset.drop('Context',axis = 1)
-    # Join the encoded dataset
-    dataset = dataset.join(FEATTMP)
-        
-    # Get one hot encoding of columns "Road_direction"
-    FEATTMP = pd.get_dummies(dataset.Road_direction, prefix='Road_direction')
-    # Drop column Context as it is now encoded
-    dataset = dataset.drop('Road_direction',axis = 1)
-    # Join the encoded dataset
-    dataset = dataset.join(FEATTMP)
-    
-    
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    # COMPUTE LAGS Features
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    
-    # 2-week lag per location (7 days per week and)
-    dataset['lag_2w'] = dataset['traffic_intensity_plus_60min'].shift(24*14*n_locations)
-    # 1-week lag per location (7 days per week and)
-    dataset['lag_1w'] = dataset['traffic_intensity_plus_60min'].shift(24*7*n_locations)
-    # 2 hours lag per location
-    dataset['lag_2h'] = dataset['traffic_intensity_plus_60min'].shift(2*n_locations)
-    # 1 hour lag per location
-    dataset['lag_1h'] = dataset['traffic_intensity_plus_60min'].shift(1*n_locations)
-    # remove NaN
-    dataset.dropna(inplace=True)
-    
-    dataset['diff_w0'] = dataset['lag_2w'] - dataset['lag_1w']
-    
-    
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
-    # CONVERT TIME TO CYCLES
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-
-    # http://blog.davidkaleko.com/feature-engineering-cyclical-features.html
-    # We map each cyclical variable onto a circle such that the lowest value for
-    # that variable appears right next to the largest value.
-    if time_to_cyclic:
-        dataset['hours_sin'] = np.sin(dataset.hours*(2.*np.pi/24))
-        dataset['hours_cos'] = np.cos(dataset.hours*(2.*np.pi/24))
-        dataset['days_sin'] = np.sin((dataset.days-1)*(2.*np.pi/7))
-        dataset['days_cos'] = np.cos((dataset.days-1)*(2.*np.pi/7))
-        dataset['Weeks_sin'] = np.sin((dataset.Weeks-1)*(2.*np.pi/52))
-        dataset['Weeks_cos'] = np.cos((dataset.Weeks-1)*(2.*np.pi/52))    
-        dataset = dataset.drop(["hours","days","Weeks"],axis = 1)
-                
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
-    # NORMALIZE & STANDARDIZE
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    
-    if do_feature_scaling:
-        dataset[['precipitation_rate_mm','traffic_speed','lag_1w','lag_2h','lag_1h']]  = \
-            feature_scaling(dataset[['precipitation_rate_mm','traffic_speed','lag_1w','lag_2h','lag_1h']].to_numpy()) 
-    
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
-    # RE-ARRANGE COLUMNS
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    
-    # dataset = dataset.drop(["X_ID","Y_ID"],axis = 1)
-    dataset = dataset.drop(["loc_ID"],axis = 1)
-    dataset = dataset.drop(["lag_2w"],axis = 1)
-            
-    ytmp = dataset.traffic_intensity_plus_60min
-    # Drop column traffic_intensity
-    dataset = dataset.drop('traffic_intensity_plus_60min',axis = 1)
-    # Join it at end of dataset
-    dataset = dataset.join(ytmp)
-    
-    # Input
-    features_names = dataset.columns.values[0:-1]
-    
-    # Output: traffic_intensity_plus_60min estimate
-    LABEL    = "traffic_intensity_plus_60min"
-
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
-    # RETURN
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-
-    return dataset, features_names, LABEL;
 
 
 
@@ -515,7 +365,6 @@ def RF_Regressor_randomizedsearch_cross_validate(model,X,y,cv):
 
 #%% MAIN
 
-
 def main():
     
     # Specify input data file:  
@@ -526,52 +375,47 @@ def main():
     jsonFilePath = "./data/OutGenTrafficSyntheticSamples.json"
     
     # initialize internal variables
-    print('Initialize variables')
-    initialize_vars()
+    print('\n')
+    print('--- Initialize variables')
+    do_feature_scaling, time_to_cyclic, n_splits, n_locations = initialize_vars()
 
     # Call the make_json function 
     # Convert the csv to json
-    print('Convert raw CSV to json')
+    print('\n')
+    print('--- Convert raw CSV to json')
     make_json(csvFilePath, jsonFilePath)
         
-
     # Import dataset from json file, and convert to dataframe
-    print('Import dataset')
+    print('\n')
+    print('--- Import dataset')
     dataset = load_parse_json(jsonFilePath)
-            
-    # Plot map with road locations
-    make_plot_map(dataset,n_locations)    
-    
+                
     # Feature engineer input features
-    print('Feature engineer input features')
-    dataset, features_names, LABEL = feature_engineer_input(dataset, time_to_cyclic, do_feature_scaling)
+    print('\n')
+    print('--- Feature engineer input features')
+    dataset, features_names, LABEL = feature_engineer_input(dataset, time_to_cyclic, do_feature_scaling, n_locations)
 
     # Split features into test and train sets
-    print('Split features into test and train sets')
+    print('\n')
+    print('--- Split features into test and train sets')
     test_size = 0.3;
     X, y, X_train, X_test, y_train, y_test = split_data_test_train(dataset, test_size)
 
-    # Random Forest regressor with default parameters
-    print('Random Forest regressor with default parameters')    
+    # Train a Random Forest regressor with default parameters
+    print('\n')
+    print('--- Train Random Forest regressor with default parameters')    
     RF_model = RF_Regressor(X_train,X_test,y_train,y_test)
 
     # save the model to disk with pickle (other options are possible, but wont bother...)
     print('\n')
-    print('Save RF model to disk: Random Forest regressor with default parameters')    
+    print('--- Save RF model to disk: Random Forest regressor with default parameters')    
     saved_model_filename = './saved_models/Random_Forest_Regressor_with_Default_Parameters.sav'
     save_RF_model_to_disk(RF_model,saved_model_filename)
 
-    # load the model from disk with pickle and make prediction
+    # Feature importance 
     print('\n')
-    print('Load the model from disk and make prediction')    
-    ypredict_from_saved_model = predict_from_saved_RF_model(saved_model_filename,X_test)
-    print(ypredict_from_saved_model)
-
-
-
-    # # Feature importance 
-    # print('Feature importance')    
-    # feature_importance(RF_model, X_test, y_test, features_names)
+    print('--- Feature importance')    
+    feature_importance(RF_model, X_test, y_test, features_names)
     
     # print('Cross-validation of Random Forest regressor')    
     # # Cross-validation approach

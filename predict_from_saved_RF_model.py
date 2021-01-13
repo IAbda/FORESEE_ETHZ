@@ -28,7 +28,7 @@ def predict_from_saved_RF_model(saved_model_filename,X_test):
     # load the model from disk
     loaded_model = pickle.load(open(saved_model_filename, 'rb'))
 
-    # Predict
+    # Predict using loaded model
     ypredict_from_saved_model = loaded_model.predict(X_test)
     
     return ypredict_from_saved_model
