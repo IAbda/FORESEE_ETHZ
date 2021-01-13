@@ -38,6 +38,9 @@ import pickle
 from convert_csv_to_json import make_json
 from plot_map import make_plot_map
 from load_parse_json import load_parse_json
+from predict_from_saved_RF_model import predict_from_saved_RF_model
+from save_RF_model_to_disk import save_RF_model_to_disk
+
 
 
 #%% INITIALIZE SOME VARIABLES
@@ -111,7 +114,7 @@ IMPORT THE DATA
 
 def import_dataset(filename):
     # Import the data with Panda
-    dataset = pd.read_csv("./Data/OutGenTrafficSyntheticSamples.csv")
+    dataset = pd.read_csv("./data/OutGenTrafficSyntheticSamples.csv")
     print(dataset)
     
     return dataset
@@ -518,9 +521,9 @@ def main():
     # Specify input data file:  
     #   Original client data is specified in a CSV file. 
     #   Clients are familiar with such a file type and format
-    csvFilePath = "./Data/OutGenTrafficSyntheticSamples.csv"
+    csvFilePath = "./data/OutGenTrafficSyntheticSamples.csv"
     # We will convert the csv file to json file
-    jsonFilePath = "./Data/OutGenTrafficSyntheticSamples.json"
+    jsonFilePath = "./data/OutGenTrafficSyntheticSamples.json"
     
     # initialize internal variables
     print('Initialize variables')
@@ -552,18 +555,17 @@ def main():
     print('Random Forest regressor with default parameters')    
     RF_model = RF_Regressor(X_train,X_test,y_train,y_test)
 
+    # save the model to disk with pickle (other options are possible, but wont bother...)
+    print('\n')
+    print('Save RF model to disk: Random Forest regressor with default parameters')    
+    saved_model_filename = './saved_models/Random_Forest_Regressor_with_Default_Parameters.sav'
+    save_RF_model_to_disk(RF_model,saved_model_filename)
 
-    # save the model to disk with pickle
-    print('Save to file model: Random Forest regressor with default parameters')    
-    filename_to_save = './Saved_Models/Random_Forest_Regressor_with_Default_Parameters.sav'
-    pickle.dump(RF_model, open(filename_to_save, 'wb'))
-    # load the model from disk
-    loaded_model = pickle.load(open(filename, 'rb'))
-    score_result = loaded_model.score(X_test, Y_test)
-    print(score_result)
-    ypredict_from_loaded_model = loaded_model.predict(X_test)
-    print(ypredict_from_loaded_model)
-
+    # load the model from disk with pickle and make prediction
+    print('\n')
+    print('Load the model from disk and make prediction')    
+    ypredict_from_saved_model = predict_from_saved_RF_model(saved_model_filename,X_test)
+    print(ypredict_from_saved_model)
 
 
 
