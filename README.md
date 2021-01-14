@@ -19,3 +19,7 @@ Build a docker image (include the dot at the end): docker build -t foresee-rf-ap
 
 Run a docker image: docker run --rm -it foresee-rf-app
 
+My docker resources:
+- https://hub.docker.com/search?q=&type=image
+- https://gist.github.com/adamveld12/4815792fadf119ef41bd
+- https://docs.docker.com/engine/reference/builder/
