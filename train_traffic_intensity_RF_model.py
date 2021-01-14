@@ -21,7 +21,6 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import numpy as np
-from treeinterpreter import treeinterpreter as ti
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import plot_confusion_matrix
@@ -412,10 +411,10 @@ def main():
     saved_model_filename = './saved_models/Random_Forest_Regressor_with_Default_Parameters.sav'
     save_RF_model_to_disk(RF_model,saved_model_filename)
 
-    # Feature importance 
-    print('\n')
-    print('--- Feature importance')    
-    feature_importance(RF_model, X_test, y_test, features_names)
+    # # Feature importance 
+    # print('\n')
+    # print('--- Feature importance')    
+    # feature_importance(RF_model, X_test, y_test, features_names)
     
     # print('Cross-validation of Random Forest regressor')    
     # # Cross-validation approach

@@ -58,11 +58,11 @@ def make_json(file, json_file):
 
 #%% Driver Code 
 
-# Decide the two file paths according to your  
-# computer system 
-csvFilePath = "./Data/OutGenTrafficSyntheticSamples.csv"
-jsonFilePath = "./Data/OutGenTrafficSyntheticSamples.json"
+# # Decide the two file paths according to your  
+# # computer system 
+# csvFilePath = "./Data/OutGenTrafficSyntheticSamples.csv"
+# jsonFilePath = "./Data/OutGenTrafficSyntheticSamples.json"
   
-# Call the make_json function 
-make_json(csvFilePath, jsonFilePath)
+# # Call the make_json function 
+# make_json(csvFilePath, jsonFilePath)
 
