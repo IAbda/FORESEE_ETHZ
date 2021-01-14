@@ -130,7 +130,8 @@ def RF_Regressor(X_train,X_test,y_train,y_test):
                                    min_samples_split=2)
     
     rf_rgr.fit(X_train, y_train)
-    print("DONE TRAINING: RandomForestRegressor took %.2f seconds to train a model" % (time() - start))
+    # print("DONE TRAINING: RandomForestRegressor took %.2f seconds to train a model" % (time() - start))
+    print("DONE")
     
     # Predict on new data based on rf_rgr
     y_pred_rf_rgr = rf_rgr.predict(X_test)
@@ -407,9 +408,11 @@ def main():
 
     # save the model to disk with pickle (other options are possible, but wont bother...)
     print('\n')
-    print('--- Save RF model to disk: Random Forest regressor with default parameters')    
-    saved_model_filename = './saved_models/Random_Forest_Regressor_with_Default_Parameters.sav'
+    # print('--- Save RF model to disk: Random Forest regressor with default parameters')    
+    print('--- Save RF model to disk')    
+    saved_model_filename = './saved_models/saved_RF_model.sav'
     save_RF_model_to_disk(RF_model,saved_model_filename)
+
 
     # # Feature importance 
     # print('\n')

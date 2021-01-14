@@ -19,7 +19,7 @@ do_feature_scaling, time_to_cyclic, n_splits, n_locations = initialize_vars()
 
 
 #%%
-saved_model_filename = './saved_models/Random_Forest_Regressor_with_Default_Parameters.sav'
+saved_model_filename = './saved_models/saved_RF_model.sav'
 new_Xinput_filename_for_predictions = "./data/new_Xinput_for_predictions.csv"
 
 
@@ -31,7 +31,7 @@ new_Xinput_for_predictions = import_dataset(new_Xinput_filename_for_predictions)
 # Feature engineer raw input features to make them ready for predictions
 new_Xinput_for_predictions, features_names, LABEL = feature_engineer_input(new_Xinput_for_predictions, time_to_cyclic, do_feature_scaling, n_locations)
 
-# make new preidctions
+# make new predictions
 ypredict_from_saved_model = predict_from_saved_RF_model(saved_model_filename,new_Xinput_for_predictions)
 print(ypredict_from_saved_model)
 
