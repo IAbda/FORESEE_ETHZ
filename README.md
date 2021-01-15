@@ -33,3 +33,13 @@ My docker resources:
 - https://hub.docker.com/search?q=&type=image
 - https://gist.github.com/adamveld12/4815792fadf119ef41bd
 - https://docs.docker.com/engine/reference/builder/
+
+
+# HOW TO PUSH A DOCKER IMAGE TO DOCKERHUB
+- docker images (to see the dockerimage-id)
+- docker tag <dockerimage-id> <dockerhub-user-id>/foresee-rf-app
+- docker login (successful)
+- docker push <dockerhub-id>/foresee-rf-app
+
+
+
