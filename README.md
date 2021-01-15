@@ -22,11 +22,12 @@ Other input features that we could consider including are:
 
 # BUILD AND RUN DOCKER IMAGE
 
-Build a docker image (include the dot at the end): docker build -t foresee-rf-app .
+- Build a docker image (include the dot at the end): docker build -t foresee-rf-app .
 
-Run a docker image: docker run --rm -it foresee-rf-app
+- Run a docker image: docker run --rm -it foresee-rf-app
 
-To inspec the actuall content of the docker image (i.e. files copied into the image), run the following: docker run -it foresee-rf-app bash
+- To check out the actual content of the docker image (i.e. files copied into the image), run the following: docker run -it foresee-rf-app bash
+
 
 My docker resources:
 - https://hub.docker.com/search?q=&type=image
