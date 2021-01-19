@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+"""
+Use `ai00i --help` to see usage instructions
+
+To make this cli available as an executable on your path, follow this guide:
+https://dbader.org/blog/how-to-make-command-line-commands-with-python
+"""
+import subprocess
+import sys
+from os import system
+
+import click
+
+
+@click.group()
+def cli():
+    """
+    A CLI utility to aid in local Docker development,
+    to save ridiculous amounts of typing cranky commands.
+
+    This is not intended for use in ci/cd or production,
+    where you only have to type commands once in your setup,
+    and should not be considered secure.
+    """
+    pass
+
+
+@click.command()
+def bash():
+    """Open a bash shell in the web container.
+
+    Cleans up the created container afterward.
+    """
+    system("docker-compose run --rm ai00i bash")
+
+
+@click.command()
+@click.argument("args", nargs=-1)
+def build(args):
+    """Build the docker images specified in the docker-compose file.
+
+    Optionally supply names of a service to build (irrelevant at present since there's only one).
+
+    Note: requirements are installed at build time into the images, not at run time into containers.
+    So adding libraries to requirements.txt files will require you to rebuild.
+    """
+    build_args = " ".join(args)
+    system("docker-compose build " + build_args)
+
+
+@click.command()
+@click.option(
+    "--with-volumes",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Purge all volumes related to existing containers (postgres, pgadmin, etc). HIGHLY DESTRUCTIVE.",
+)
+def prune(with_volumes):
+    """Find and destroy all `ai00i_*` containers, optionally removing their persistent volumes
+
+    See https://www.digitalocean.com/community/tutorials/how-to-remove-docker-images-containers-and-volumes#a-docker-cheat-sheet
+
+    """
+    volume_flag = "-v" if with_volumes else ""
+    # Flake8 has to be ignored because grep's escape characters are valid but flake thinks it's python
+    system(
+        "docker-compose stop && docker ps -a | grep 'ai00i_' | awk '{print $1}' | xargs docker rm %s"  # noqa:W605
+        % volume_flag
+    )
+
+
+@click.command()
+def stop():
+    """Stop any running containers"""
+    system("docker-compose stop")
+
+
+@click.command()
+def train():
+    """ Runs the training process to train the model, ensuring the resulting file gets saved to the host.
+    """
+    system("docker-compose run --rm foresee")
+
+
+cli.add_command(bash)
+cli.add_command(build)
+cli.add_command(prune)
+cli.add_command(stop)
+cli.add_command(train)
+
+
+if __name__ == "__main__":
+    cli()

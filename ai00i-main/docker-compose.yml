@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  foresee:
+    image: ai00i/foresee
+    container_name: ai001_main
+    # The following line overrides the CMD in your dockerfile
+#    command: python train_model.py
+    build:
+        context: .
+        dockerfile: ./Dockerfile
+    volumes:
+      - .:/foresee_ethz_app/
+
+  # Re-use same image with different command:
+  #  foresee_predictor:
+  #    image: ai00i/foresee
+  #    command: python predict.py
