@@ -24,11 +24,38 @@ Other input features that we could consider including are:
 - Below are instructions to build Docker image
 
 # BUILD AND RUN DOCKER IMAGE
+## Option 1
 - Build a docker image (include the dot at the end): docker build -t foresee-rf-app .
 
 - Run a docker image: docker run --rm -it foresee-rf-app
 
 - To check out the actual content of the docker image (i.e. files copied into the image), run the following: docker run -it foresee-rf-app bash
+
+
+## Option 1
+
+1. I made a quick CLI to help, to use it you need to make it executable:
+```
+chmod +x ai00i
+```
+
+2. (Developers only) install the developer requirements into your virtualenv or workspace:
+```
+pip install -r requirements-dev.txt
+pip install -r requirements.txt
+```
+
+3. (Optional) if you want to learn about the wonderful pre-commit, which helps you to code with precision...
+```
+pre-commit install
+```
+... will install the hooks so that as you commit your code, it gets tidied up systematically for you.
+
+4. Run the CLI to train the model.
+```
+./ai00i train
+```
+
 
 My docker resources:
 - https://hub.docker.com/search?q=&type=image

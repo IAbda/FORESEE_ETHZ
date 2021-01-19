@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  foresee:
+    image: ai00i/foresee
+    container_name: ai00i_main
+    # The following line overrides the CMD in the Dockerfile
+    # command: python train_traffic_intensity_RF_model.py
+    build:
+        context: .
+        dockerfile: ./Dockerfile
+    volumes:
+      - .:/foresee_ethz_app/
+
+  # Re-use same image with different command:
+  #  foresee_predictor:
+  #    image: ai00i/foresee
+  #    command: python make_predictions.py
