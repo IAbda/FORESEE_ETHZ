@@ -1,3 +1,10 @@
+
+
+Model training perfromance    |  1-hour ahead predicions 
+:-------------------------:|:-------------------------:
+!![make_predictions](https://user-images.githubusercontent.com/16349565/105020775-08fee600-5a48-11eb-8e70-540e4a7c3ad3.png)  | ![make_predictions](https://user-images.githubusercontent.com/16349565/105020775-08fee600-5a48-11eb-8e70-540e4a7c3ad3.png)
+
+
 # FORESEE_ETHZ
 
 Perform a classification/regression using a Random Forest (RF):
