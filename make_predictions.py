@@ -12,7 +12,7 @@ from plot_map import make_plot_map
 from predict_from_saved_RF_model import predict_from_saved_RF_model
 from feature_engineer_input import feature_engineer_input
 from initialize_vars import initialize_vars
-
+from save_predictions_to_json import save_predictions_to_json
 
 #%% initialize internal variables
 do_feature_scaling, time_to_cyclic, n_splits, n_locations = initialize_vars()
@@ -21,6 +21,7 @@ do_feature_scaling, time_to_cyclic, n_splits, n_locations = initialize_vars()
 #%%
 saved_model_filename = './saved_models/saved_RF_model.sav'
 new_Xinput_filename_for_predictions = "./data/new_Xinput_for_predictions.csv"
+file_path_predictions_to_json = './file_predictions_to_json.json'
 
 
 #%%
@@ -37,4 +38,7 @@ print(ypredict_from_saved_model)
 
 # Visualize predictions on a map-like plot of road locations
 make_plot_map(new_Xinput_for_predictions,ypredict_from_saved_model,n_locations)    
+
+# Save predictions to JSON file
+save_predictions_to_json(file_path_predictions_to_json,ypredict_from_saved_model)    
 

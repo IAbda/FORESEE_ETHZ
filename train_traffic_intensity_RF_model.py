@@ -413,26 +413,25 @@ def main():
     saved_model_filename = './saved_models/saved_RF_model.sav'
     save_RF_model_to_disk(RF_model,saved_model_filename)
 
-
-    # # Feature importance 
-    # print('\n')
-    # print('--- Feature importance')    
-    # feature_importance(RF_model, X_test, y_test, features_names)
+    # Feature importance 
+    print('\n')
+    print('--- Calculating feature importance')    
+    feature_importance(RF_model, X_test, y_test, features_names)
     
-    # print('Cross-validation of Random Forest regressor')    
-    # # Cross-validation approach
-    # # cv = KFold(n_splits)
-    # cv = StratifiedKFold(n_splits,shuffle=True,random_state=42)
-    # # cv = TimeSeriesSplit(n_splits=n_splits) # creating a timeseries split of the datasets
+    # Cross-validation of RF model with default parameters
+    print('\n')
+    print('--- Cross-validation of Random Forest regressor with default parameters')    
+    # choose one of the following cross-validation split approach: KFold, StratifiedKFold, TimeSeriesSplit
+    # cv = KFold(n_splits)
+    cv = StratifiedKFold(n_splits,shuffle=True,random_state=42)
+    # cv = TimeSeriesSplit(n_splits=n_splits) # creating a timeseries split of the datasets
+    RF_Regressor_cross_validate(RF_model,X,y,cv) 
 
-    # # Cross-validation of the Random Forest regressor with default parameters
-    # RF_Regressor_cross_validate(RF_model,X,y,cv) 
-
-    # # best RF model with randomizedsearch
-    # print('best RF model with randomizedsearch')    
+    # # Find best RF model with randomizedsearch
+    # print('--- Find best RF model with randomizedsearch')    
     # best_rfc_random = RF_Regressor_randomizedsearch(X_train,X_test,y_train,y_test,cv)
 
-    # print('Cross-validation of best RF model with randomizedsearch')    
+    # print('--- Cross-validation of best RF model with randomizedsearch')    
     # RF_Regressor_randomizedsearch_cross_validate(best_rfc_random,X,y,cv)
 
 
