@@ -18,12 +18,12 @@ Other input features that we could consider including are:
 - geographical distances between locations or with respect to special areas (attractions, tourist spots, etc.) - Although Forest-based Classification and Regression is not a spatial machine learning tool, one way to leverage the power of space in the  analysis is using distance features
 - quality of road (bad, good, etc.)
 
-# INSTRUCTIONS
+# RUN THE CODE: INSTRUCTIONS
 - To train RF models run the following file: train_traffic_intensity_RF_model.py
 - To make predictions using saved model (model saved to disk using Pickle), run the following file:  make_predictions.py
 - Below are instructions to build Docker image
 
-# BUILD AND RUN DOCKER IMAGE
+# DOCKER: BUILD AND RUN DOCKER IMAGE
 ## Option 1
 - Build a docker image (include the dot at the end): docker build -t foresee-rf-app .
 
@@ -63,7 +63,7 @@ My docker resources:
 - https://docs.docker.com/engine/reference/builder/
 - https://dbader.org/blog/how-to-make-command-line-commands-with-python
 
-# HOW TO PUSH A DOCKER IMAGE TO DOCKERHUB
+# DOCKERHUB: HOW TO PUSH A DOCKER IMAGE TO DOCKERHUB?
 - docker images (to see the dockerimage-id)
 - docker tag <dockerimage-id> <dockerhub-user-id>/foresee-rf-app
 - docker login (successful)
