@@ -46,7 +46,7 @@ docker run -it foresee-rf-app bash
 ```
 
 
-## Option 1
+## Option 2
 
 1. I made a quick CLI to help, to use it you need to make it executable:
 ```
