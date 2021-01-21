@@ -30,11 +30,20 @@ Other input features that we could consider including are:
 
 # DOCKER: BUILD AND RUN DOCKER IMAGE
 ## Option 1
-- Build a docker image (include the dot at the end): docker build -t foresee-rf-app .
+- Build a docker image (include the dot at the end): 
+```
+docker build -t foresee-rf-app .
+```
 
-- Run a docker image: docker run --rm -it foresee-rf-app
+- Run a docker image: 
+```
+docker run --rm -it foresee-rf-app
+```
 
-- To check out the actual content of the docker image (i.e. files copied into the image), run the following: docker run -it foresee-rf-app bash
+- To check out the actual content of the docker image (i.e. files copied into the image), run the following: 
+```
+docker run -it foresee-rf-app bash
+```
 
 
 ## Option 1
