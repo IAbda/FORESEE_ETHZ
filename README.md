@@ -20,7 +20,9 @@ Other input features that we could consider including are:
 
 # RUN THE CODE: INSTRUCTIONS
 - To train RF models run the following file: train_traffic_intensity_RF_model.py
+- The training data is provided as CSV file which is converted to a JSON file in our code
 - To make predictions using saved model (model saved to disk using Pickle), run the following file:  make_predictions.py
+- The new output predictions are saved to disk on a JSON file.
 - Below are instructions to build Docker image
 
 # DOCKER: BUILD AND RUN DOCKER IMAGE
