@@ -9,13 +9,15 @@ Model training perfromance    |  1-hour ahead predicions
 
 # FORESEE_ETHZ
 Perform a classification/regression using a Random Forest (RF):
-- We predict a target traffic intensity level in a unit location at a specific time interval. 
+- We predict the one-hour-ahead traffic intensity level in a unit location. 
 - We adopt the following types of features: 
   1) time features, such as hour, day-of-week, and week; 
   2) spatial features, such as location_id; 
   3) rain (precipitation); 
   4) traffic features such as average hourly traffic speed
-  5) Context such as holidays, sporting events, construction, etc.  
+  5) Road features such number of lanes and direction
+  6) Context such as holidays, sporting events, construction, etc.  
+  7) Incidents such as cyber attack or burst pipe or failed fan in a tunnel, etc.  
 
 Other input features that we could consider including are:
 - geographical distances between locations or with respect to special areas (attractions, tourist spots, etc.) - Although Forest-based Classification and Regression is not a spatial machine learning tool, one way to leverage the power of space in the  analysis is using distance features
