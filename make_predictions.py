@@ -19,7 +19,7 @@ do_feature_scaling, time_to_cyclic, n_splits, n_locations = initialize_vars()
 
 
 #%%
-saved_model_filename = './saved_models/saved_RF_model.sav'
+saved_model_filename = './saved_models/saved_rfc_base.sav'
 new_Xinput_filename_for_predictions = "./data/new_Xinput_for_predictions.csv"
 file_path_predictions_to_json = './file_predictions_to_json.json'
 

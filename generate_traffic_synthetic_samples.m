@@ -98,13 +98,20 @@ for i=1:length(id)
     end
 end
 
-% idf = randsample(length(precipitation_rate),85000);
-% precipitation_rate(idf) = 0;
 
-figure, plot(t_all,mean_precipitation_rate,'k-','LineWidth',2)
-figure, histogram(precipitation_rate)
 figure, plot(precipitation_rate)
+xlabel('Time','FontSize',16)
+ylabel('Precipitation rate [day]','FontSize',16)
+set(gcf,'color','w');
+grid minor
+
 figure, plot(loc_ID,precipitation_rate,'o')
+xlabel('Location ID','FontSize',16)
+ylabel('Precipitation rate [mm]','FontSize',16)
+set(gcf,'color','w');
+grid minor
+
+
 
 
 %% CONTEXT
@@ -196,7 +203,16 @@ traffic_speed(idx) = traffic_speed(idx)./random('uniform',5,10,length(idx),1);
 traffic_speed(traffic_speed<=5) = 5; 
 
 figure, plot(loc_ID,traffic_speed,'o')
+xlabel('Location ID','FontSize',16)
+ylabel('Traffic speed [km/h]','FontSize',16)
+set(gcf,'color','w');
+grid minor
+
 figure, plot(precipitation_rate,traffic_speed,'o')
+xlabel('Precipitation rate [mm]','FontSize',16)
+ylabel('Traffic speed [km/h]','FontSize',16)
+set(gcf,'color','w');
+grid minor
 
 
 %% TRAFFIC INTENSITY at Time t+60min:  cars per hour
@@ -208,8 +224,6 @@ traffic_intensity_plus_60min(id) = traffic_intensity_plus_60min(id).*1.75;
 
 id = find(loc_ID == 9);
 traffic_intensity_plus_60min(id) = traffic_intensity_plus_60min(id).*1.25;
-
-figure, plot(loc_ID,traffic_intensity_plus_60min,'o')
 
 
 % Intensity drops by half on the weekend
@@ -225,8 +239,6 @@ traffic_intensity_plus_60min(id) = traffic_intensity_plus_60min(id)./1.5;
 id = find(hours > 10 & hours <= 16);
 traffic_intensity_plus_60min(id) = traffic_intensity_plus_60min(id)./1.25;
 
-figure, plot(days,traffic_intensity_plus_60min,'o')
-figure, plot(hours,traffic_intensity_plus_60min,'o')
 
 % Effect of context
 idx = strcmp(Context,'CONSTRUCTION');
@@ -260,9 +272,40 @@ idx = find(precipitation_rate>=thresholdrain2);
 traffic_intensity_plus_60min(idx) = traffic_intensity_plus_60min(idx)./random('uniform',5,10,length(idx),1); 
 
 traffic_intensity_plus_60min(traffic_intensity_plus_60min<=5) = 0; 
+
+
+
+
+figure, plot(days,traffic_intensity_plus_60min,'o')
+xlabel('Day of week','FontSize',16)
+ylabel('Traffic intensity [cars/h]','FontSize',16)
+set(gcf,'color','w');
+grid minor
+
+figure, plot(hours,traffic_intensity_plus_60min,'o')
+xlabel('Hour of day','FontSize',16)
+ylabel('Traffic intensity [cars/h]','FontSize',16)
+set(gcf,'color','w');
+grid minor
+
 figure, plot(loc_ID,traffic_intensity_plus_60min,'o')
+xlabel('Location ID','FontSize',16)
+ylabel('Traffic intensity [cars/h]','FontSize',16)
+set(gcf,'color','w');
+grid minor
+
 figure, plot(precipitation_rate,traffic_intensity_plus_60min,'o')
+xlabel('Precipitation rate [mm]','FontSize',16)
+ylabel('Traffic intensity [cars/h]','FontSize',16)
+set(gcf,'color','w');
+grid minor
+
 figure, plot(traffic_speed,traffic_intensity_plus_60min,'o')
+xlabel('Traffic speed [km/h]','FontSize',16)
+ylabel('Traffic intensity [cars/h]','FontSize',16)
+set(gcf,'color','w');
+grid minor
+
 
 
 %% TRAFFIC INTENSITY at Time - 60min:  cars per hour

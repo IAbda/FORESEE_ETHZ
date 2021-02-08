@@ -32,6 +32,7 @@ from sklearn.model_selection import StratifiedKFold, TimeSeriesSplit, GridSearch
 from sklearn.pipeline import Pipeline
 from scipy.stats import randint
 import pickle
+from sklearn.tree import export_graphviz
 
 from import_dataset import import_dataset
 from convert_csv_to_json import make_json
@@ -42,6 +43,7 @@ from save_RF_model_to_disk import save_RF_model_to_disk
 from feature_engineer_input import feature_engineer_input
 from initialize_vars import initialize_vars
 from feature_scaling import feature_scaling
+import os
 
 
 
@@ -118,13 +120,13 @@ RANDOM FOREST REGRESSOR WITH DEFAULT PARAMETERS
 """
 # https://scikit-learn.org/stable/auto_examples/inspection/plot_permutation_importance.html#sphx-glr-auto-examples-inspection-plot-permutation-importance-py
 
-def RF_Regressor(X_train,X_test,y_train,y_test):
+def RF_Regressor(X_train,X_test,y_train,y_test,n_estimators,max_depth):
     start = time()
     # initializing the model which is a Random Forest model and uses default hyperparameters
-    rf_rgr = RandomForestRegressor(n_estimators=100, 
+    rf_rgr = RandomForestRegressor(n_estimators=n_estimators, 
                                    random_state=42, 
                                    bootstrap=False,
-                                   max_depth=20,
+                                   max_depth=max_depth,
                                    max_features = "auto",
                                    min_samples_leaf=4,
                                    min_samples_split=2)
@@ -401,23 +403,60 @@ def main():
     test_size = 0.3;
     X, y, X_train, X_test, y_train, y_test = split_data_test_train(dataset, test_size)
 
-    # Train a Random Forest regressor with default parameters
+    # Train a base Random Forest regressor with default parameters
+    # no hyper-parameters optimization here for demo purpose
     print('\n')
     print('--- Train Random Forest regressor with default parameters')    
-    RF_model = RF_Regressor(X_train,X_test,y_train,y_test)
+    n_trees = 100 #100
+    max_depth=20  # 20
+    rfc_base = RF_Regressor(X_train,X_test,y_train,y_test,n_estimators=n_trees,max_depth=max_depth)
+
 
     # save the model to disk with pickle (other options are possible, but wont bother...)
     print('\n')
     # print('--- Save RF model to disk: Random Forest regressor with default parameters')    
     print('--- Save RF model to disk')    
-    saved_model_filename = './saved_models/saved_RF_model.sav'
-    save_RF_model_to_disk(RF_model,saved_model_filename)
+    saved_model_filename = './saved_models/saved_rfc_base.sav'
+    save_RF_model_to_disk(rfc_base,saved_model_filename)
 
+
+    """
+
+    # PLOT A SINGLE TREE    
+    sing_tree_id = 6;
+    
+    # Extract single tree
+    single_tree_estimator_in_RF = rfc_base.estimators_[sing_tree_id]
+        
+    # Export as dot file
+    export_graphviz(single_tree_estimator_in_RF, out_file='tree.dot', 
+                    feature_names = features_names,
+                    class_names = LABEL,
+                    rounded = True, proportion = False, 
+                    precision = 2, filled = True)
+                
+    # Convert to png using system command (requires Graphviz)
+    # Copy dot file into: http://www.webgraphviz.com/ Get it rendered there.
+    # OR
+    # on Windows: command line: dot tree.dot -Tpng -o tree.png
+    os.system('dot tree.dot -Tpng -o tree.png')
+
+    """
+
+
+
+    
     # Feature importance 
     print('\n')
     print('--- Calculating feature importance')    
-    feature_importance(RF_model, X_test, y_test, features_names)
+    feature_importance(rfc_base, X_test, y_test, features_names)
     
+  
+    
+        
+    
+    """
+
     # Cross-validation of RF model with default parameters
     print('\n')
     print('--- Cross-validation of Random Forest regressor with default parameters')    
@@ -425,7 +464,7 @@ def main():
     # cv = KFold(n_splits)
     cv = StratifiedKFold(n_splits,shuffle=True,random_state=42)
     # cv = TimeSeriesSplit(n_splits=n_splits) # creating a timeseries split of the datasets
-    RF_Regressor_cross_validate(RF_model,X,y,cv) 
+    RF_Regressor_cross_validate(rfc_base,X,y,cv) 
 
     # # Find best RF model with randomizedsearch
     # print('--- Find best RF model with randomizedsearch')    
@@ -433,6 +472,12 @@ def main():
 
     # print('--- Cross-validation of best RF model with randomizedsearch')    
     # RF_Regressor_randomizedsearch_cross_validate(best_rfc_random,X,y,cv)
+
+
+    """
+
+
+# plt.close('all')  
 
 
 #%% RUN MAIN
