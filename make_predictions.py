@@ -9,19 +9,19 @@ Created on Wed Jan 13 10:19:08 2021
 
 from import_dataset import import_dataset
 from plot_map import make_plot_map
-from predict_from_saved_RF_model import predict_from_saved_RF_model
-from feature_engineer_input import feature_engineer_input
-from initialize_vars import initialize_vars
 from save_predictions_to_json import save_predictions_to_json
-
-#%% initialize internal variables
-do_feature_scaling, time_to_cyclic, n_splits, n_locations = initialize_vars()
-
+from make_data_lag import series_to_supervised
+import pandas as pd
+import pickle
+import glob
+import numpy as np
 
 #%%
-saved_model_filename = './saved_models/saved_rfc_base.sav'
+saved_model_filename = './saved_models/RF_20210915204354826.sav'
+saved_data_transformer = './saved_models/col_transform_20210915204354826.sav'
+
 new_Xinput_filename_for_predictions = "./data/new_Xinput_for_predictions.csv"
-file_path_predictions_to_json = './file_predictions_to_json.json'
+file_path_predictions_to_json = './output_model_predictions.json'
 
 
 #%%
@@ -29,15 +29,31 @@ file_path_predictions_to_json = './file_predictions_to_json.json'
 # Import new input X data to make brand new predictions
 new_Xinput_for_predictions = import_dataset(new_Xinput_filename_for_predictions)
 
-# Feature engineer raw input features to make them ready for predictions
-new_Xinput_for_predictions, features_names, LABEL = feature_engineer_input(new_Xinput_for_predictions, time_to_cyclic, do_feature_scaling, n_locations)
+# Introduce the traffic intensity lag time series as input features for supervised learning
+dataset,n_locations = series_to_supervised(new_Xinput_for_predictions,kstepsahead=2)
+
+new_X = dataset.iloc[:, :-1]
+
+xcoord = np.array(new_X.X_ID[0:n_locations]); 
+ycoord = np.array(new_X.Y_ID[0:n_locations]);  
+locID  = np.array(new_X.loc_ID[0:n_locations]);  
 
 # make new predictions
-ypredict_from_saved_model = predict_from_saved_RF_model(saved_model_filename,new_Xinput_for_predictions)
-print(ypredict_from_saved_model)
+saved_model_filename=glob.glob(saved_model_filename)
+saved_data_transformer=glob.glob(saved_data_transformer)
+
+# load the model and data transformer from disk
+model = pickle.load(open(saved_model_filename[0], 'rb'))
+data_transformer = pickle.load(open(saved_data_transformer[0], 'rb'))
+
+# transform new data with original data transformer
+X_transformer = data_transformer.transform(new_X)
+
+# Predict using loaded model
+ypredict_from_saved_model = model.predict(X_transformer)    
 
 # Visualize predictions on a map-like plot of road locations
-make_plot_map(new_Xinput_for_predictions,ypredict_from_saved_model,n_locations)    
+make_plot_map(xcoord,ycoord,locID,ypredict_from_saved_model)    
 
 # Save predictions to JSON file
 save_predictions_to_json(file_path_predictions_to_json,ypredict_from_saved_model)    

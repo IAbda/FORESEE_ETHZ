@@ -9,10 +9,9 @@ Created on Wed Jan 13 10:27:11 2021
 #%% IMPORT LIBRARIES
 
 import pandas as pd
-from feature_scaling import feature_scaling
 import numpy as np
-
-
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
 
 #%% FEATURE ENGINEER SOME OF THE INPUT PARAMETERS
 """
@@ -23,44 +22,48 @@ FEATURE ENGINEER SOME OF THE INPUT PARAMETERS
 -----------------------------------------------------------------
 """
 
-def feature_engineer_input(dataset, time_to_cyclic, do_feature_scaling, n_locations):        
+def feature_engineer_input(X,*Xopt):         
+    
+
     # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    # ONE-HOT-ENCODING of categorical features
+    # ONE-HOT-ENCODING of categorical features and scaling
     # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    # determine categorical and numerical features
+    # define the data preparation for the columns
+
+    numerical_ix = X.select_dtypes(include=['int64', 'float64']).columns
+    categorical_ix = X.select_dtypes(include=['object', 'bool']).columns
     
-    # Get one hot encoding of columns "Context"
-    FEATTMP = pd.get_dummies(dataset.Context, prefix='Context')
-    # Drop column Context as it is now encoded
-    dataset = dataset.drop('Context',axis = 1)
-    # Join the encoded dataset
-    dataset = dataset.join(FEATTMP)
-        
-    # Get one hot encoding of columns "Road_direction"
-    FEATTMP = pd.get_dummies(dataset.Road_direction, prefix='Road_direction')
-    # Drop column Context as it is now encoded
-    dataset = dataset.drop('Road_direction',axis = 1)
-    # Join the encoded dataset
-    dataset = dataset.join(FEATTMP)
+    t = [('cat', OneHotEncoder(handle_unknown = 'ignore'), categorical_ix)]
+    # t = [('cat', OneHotEncoder(), categorical_ix), ('num', MinMaxScaler(), numerical_ix)]
+    col_transform = ColumnTransformer(transformers=t, remainder='passthrough')
+    col_transform.fit(X)
+    Xout = col_transform.transform(X)    
+    Xout = pd.DataFrame(Xout)
+ 
+    Xout2 = pd.DataFrame()
+    if not Xopt == False: # If tuple is not empty
+        for arg in Xopt:
+            Xout2 = col_transform.transform(arg) # apply same ColumnTransformer fitted on original X input data
+            Xout2 = pd.DataFrame(Xout2)
     
+    # Input features names
+    features_names = np.array(col_transform.get_feature_names())     
     
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    # COMPUTE LAGS Features
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    # Output label: traffic_intensity
+    LABEL    = "traffic_intensity"
     
-    # # 2-week lag per location (7 days per week and)
-    # dataset['lag_2w'] = dataset['traffic_intensity_plus_60min'].shift(24*14*n_locations)
-    # # 1-week lag per location (7 days per week and)
-    # dataset['lag_1w'] = dataset['traffic_intensity_plus_60min'].shift(24*7*n_locations)
-    # 2 hours lag per location
-    dataset['lag_2h'] = dataset['traffic_intensity_plus_60min'].shift(2*n_locations)
-    # 1 hour lag per location
-    dataset['lag_1h'] = dataset['traffic_intensity_plus_60min'].shift(1*n_locations)
-    # remove NaN
-    dataset.dropna(inplace=True)
-    
-#    dataset['diff_w0'] = dataset['lag_2w'] - dataset['lag_1w']
-    
-    
+    # Normalize data
+    """
+    numerical_ix = Xout.select_dtypes(include=['int64', 'float64']).columns
+    t = [('num', MinMaxScaler(), numerical_ix)]
+    col_transform = ColumnTransformer(transformers=t, remainder='passthrough')
+    # Xout= np.array(col_transform.fit_transform(Xout))
+    Xout= col_transform.fit_transform(Xout)
+    Xout = pd.DataFrame(Xout)
+    """
+            
     # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
     # CONVERT TIME TO CYCLES
     # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
@@ -68,6 +71,7 @@ def feature_engineer_input(dataset, time_to_cyclic, do_feature_scaling, n_locati
     # http://blog.davidkaleko.com/feature-engineering-cyclical-features.html
     # We map each cyclical variable onto a circle such that the lowest value for
     # that variable appears right next to the largest value.
+    """
     if time_to_cyclic:
         dataset['hours_sin'] = np.sin(dataset.hours*(2.*np.pi/24))
         dataset['hours_cos'] = np.cos(dataset.hours*(2.*np.pi/24))
@@ -76,47 +80,12 @@ def feature_engineer_input(dataset, time_to_cyclic, do_feature_scaling, n_locati
         dataset['Weeks_sin'] = np.sin((dataset.Weeks-1)*(2.*np.pi/52))
         dataset['Weeks_cos'] = np.cos((dataset.Weeks-1)*(2.*np.pi/52))    
         dataset = dataset.drop(["hours","days","Weeks"],axis = 1)
-                
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
-    # NORMALIZE & STANDARDIZE
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    
-    if do_feature_scaling:
-        dataset[['precipitation_rate_mm','traffic_speed','lag_2h','lag_1h']]  = \
-            feature_scaling(dataset[['precipitation_rate_mm','traffic_speed','lag_2h','lag_1h']].to_numpy()) 
-        # dataset[['precipitation_rate_mm','traffic_speed','lag_1w','lag_2h','lag_1h']]  = \
-        #     feature_scaling(dataset[['precipitation_rate_mm','traffic_speed','lag_1w','lag_2h','lag_1h']].to_numpy()) 
-    
-    
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
-    # RE-ARRANGE COLUMNS
-    # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    
-    # dataset = dataset.drop(["X_ID","Y_ID"],axis = 1)
-#    dataset = dataset.drop(["loc_ID"],axis = 1)
-#    dataset = dataset.drop(["lag_2w"],axis = 1)
-            
-    ytmp = dataset.traffic_intensity_plus_60min
-    # Drop column traffic_intensity
-    dataset = dataset.drop('traffic_intensity_plus_60min',axis = 1)
-    # Join it at end of dataset
-    dataset = dataset.join(ytmp)
-    
-    # Input
-    features_names = dataset.columns.values[0:-1]
-    
-    # Output: traffic_intensity_plus_60min estimate
-    LABEL    = "traffic_intensity_plus_60min"
-
+    """
+           
+     
     # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
     # RETURN
     # % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
 
-    # Reset index and use the drop parameter to avoid the old index being added as a column
-    dataset = dataset.reset_index(drop=True)
-
-    return dataset, features_names, LABEL;
-
-    
-    
+    return col_transform, Xout, Xout2, features_names, LABEL
     

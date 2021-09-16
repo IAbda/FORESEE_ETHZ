@@ -6,7 +6,7 @@ Created on Mon Mar 23 11:49:26 2020
 """
 
 """
-Perform a classification/regression using a Random Forest:
+Perform a regression using a Random Forest:
 - We predict a target traffic intensity level in a unit location at a specific time interval. 
 - We adopt the following types of features: 1) time features, such as hour, day-of-week,
   and week; 2) spatial features, such as location_id; 3) rain (precipitation);   
@@ -38,14 +38,18 @@ from import_dataset import import_dataset
 from convert_csv_to_json import make_json
 from plot_map import make_plot_map
 from load_parse_json import load_parse_json
-from predict_from_saved_RF_model import predict_from_saved_RF_model
 from save_RF_model_to_disk import save_RF_model_to_disk
 from feature_engineer_input import feature_engineer_input
 from initialize_vars import initialize_vars
 from feature_scaling import feature_scaling
 import os
-
-
+from sklearn.compose import make_column_transformer
+from sklearn.preprocessing import LabelEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import MinMaxScaler
+from make_data_lag import series_to_supervised
+from save_model_performance_to_json import save_model_performance_to_json
+import datetime
 
 
 #%% Prediction metrics scores       
@@ -82,12 +86,11 @@ SPLIT THE DATA INTO TRAINING AND TESTING SETS
 -----------------------------------------------------------------
 """
 
-def split_data_test_train(dataset, test_size):
-    X = dataset.iloc[:, 0:-1].values
-    y = dataset.iloc[:, -1].values
-    
-    n_features=X.shape[1]
-    
+def split_data_test_train(dataset, test_size=0.33):
+    # separate into input and output columns
+    X = dataset.iloc[:, :-1]
+    y = dataset.iloc[:, -1]
+        
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
     
     
@@ -157,9 +160,10 @@ def RF_Regressor(X_train,X_test,y_train,y_test,n_estimators,max_depth):
     # Prediction metrics scores:
     print("RF train accuracy: %0.3f" % rf_rgr.score(X_train, y_train))
     print("RF test accuracy: %0.3f" % rf_rgr.score(X_test, y_test))
-    rf_rgr_accuracy = Average_Traffic_Intensity_Error(rf_rgr, X_test, y_test)
+    # rf_rgr_accuracy = Average_Traffic_Intensity_Error(rf_rgr, X_test, y_test)
 
-    return rf_rgr
+
+    return rf_rgr, rf_rgr.score(X_train, y_train), rf_rgr.score(X_test, y_test)
 
 
 
@@ -193,8 +197,15 @@ def feature_importance(model, X_test, y_test, features_names):
                 labels=features_names[perm_sorted_idx])
     fig.tight_layout()
     plt.show()
+    
+    sorted_features_names = features_names[perm_sorted_idx]
+    feature_importances = result.importances[perm_sorted_idx]
+
+    return sorted_features_names, feature_importances
 
 
+
+        
 
 #%% CROSS-VALIDATION
 """
@@ -367,124 +378,129 @@ def RF_Regressor_randomizedsearch_cross_validate(model,X,y,cv):
 
 #%% MAIN
 
-def main():
+# def main():
     
-    # Specify input data file:  
-    #   Original client data is specified in a CSV file. 
-    #   Clients are familiar with such a file type and format
-    csvFilePath = "./data/OutGenTrafficSyntheticSamples.csv"
-    # We will convert the csv file to json file
-    jsonFilePath = "./data/OutGenTrafficSyntheticSamples.json"
+# Specify input data file:  
+#   Original client data is specified in a CSV file. 
+#   Clients are familiar with such a file type and format
+csvFilePath = "./data/OutGenTrafficSyntheticSamples.csv"
+# We will convert the csv file to json file
+jsonFilePath = "./data/OutGenTrafficSyntheticSamples.json"
+
+# initialize internal variables
+print('\n')
+print('--- Initialize variables')
+#n_splits, kstepsahead, n_trees, max_depth = initialize_vars()
+
+# Call the make_json function 
+# Convert the csv to json
+print('\n')
+print('--- Convert raw CSV to json')
+make_json(csvFilePath, jsonFilePath)
     
-    # initialize internal variables
-    print('\n')
-    print('--- Initialize variables')
-    do_feature_scaling, time_to_cyclic, n_splits, n_locations = initialize_vars()
+# Import dataset from json file, and convert to dataframe
+print('\n')
+print('--- Import dataset')
+dataset = load_parse_json(jsonFilePath)
 
-    # Call the make_json function 
-    # Convert the csv to json
-    print('\n')
-    print('--- Convert raw CSV to json')
-    make_json(csvFilePath, jsonFilePath)
-        
-    # Import dataset from json file, and convert to dataframe
-    print('\n')
-    print('--- Import dataset')
-    dataset = load_parse_json(jsonFilePath)
-                
-    # Feature engineer input features
-    print('\n')
-    print('--- Feature engineer input features')
-    dataset, features_names, LABEL = feature_engineer_input(dataset, time_to_cyclic, do_feature_scaling, n_locations)
+# Introduce the traffic intensity lag time series as input features for supervised learning
+dataset,n_locations = series_to_supervised(dataset,kstepsahead=2)
 
-    # Split features into test and train sets
-    print('\n')
-    print('--- Split features into test and train sets')
-    test_size = 0.3;
-    X, y, X_train, X_test, y_train, y_test = split_data_test_train(dataset, test_size)
+            
+# Split features into test and train sets
+print('\n')
+print('--- Split features into test and train sets')
+X, y, x_train, x_test, ytrain, ytest = split_data_test_train(dataset, test_size=0.33)
 
-    # Train a base Random Forest regressor with default parameters
-    # no hyper-parameters optimization here for demo purpose
-    print('\n')
-    print('--- Train Random Forest regressor with default parameters')    
-    n_trees = 100 #100
-    max_depth=20  # 20
-    rfc_base = RF_Regressor(X_train,X_test,y_train,y_test,n_estimators=n_trees,max_depth=max_depth)
+     
+# Feature engineer input features
+print('\n')
+print('--- Feature engineer input features')
+col_transform,Xtrain,Xtest,features_names, LABEL = feature_engineer_input(x_train,x_test)
 
 
-    # save the model to disk with pickle (other options are possible, but wont bother...)
-    print('\n')
-    # print('--- Save RF model to disk: Random Forest regressor with default parameters')    
-    print('--- Save RF model to disk')    
-    saved_model_filename = './saved_models/saved_rfc_base.sav'
-    save_RF_model_to_disk(rfc_base,saved_model_filename)
+# Train a base Random Forest regressor with default parameters
+# no hyper-parameters optimization here for demo purpose
+print('\n')
+print('--- Train Random Forest regressor with default parameters')    
+rfc_base,train_score, test_score = RF_Regressor(Xtrain,Xtest,ytrain,ytest,n_estimators=300,max_depth=20)
 
 
-    """
-
-    # PLOT A SINGLE TREE    
-    sing_tree_id = 6;
-    
-    # Extract single tree
-    single_tree_estimator_in_RF = rfc_base.estimators_[sing_tree_id]
-        
-    # Export as dot file
-    export_graphviz(single_tree_estimator_in_RF, out_file='tree.dot', 
-                    feature_names = features_names,
-                    class_names = LABEL,
-                    rounded = True, proportion = False, 
-                    precision = 2, filled = True)
-                
-    # Convert to png using system command (requires Graphviz)
-    # Copy dot file into: http://www.webgraphviz.com/ Get it rendered there.
-    # OR
-    # on Windows: command line: dot tree.dot -Tpng -o tree.png
-    os.system('dot tree.dot -Tpng -o tree.png')
-
-    """
+# save the model to disk with pickle (other options are possible, but wont bother...)
+print('\n')
+# print('--- Save RF model to disk: Random Forest regressor with default parameters')    
+print('--- Save RF model to disk')    
+saved_model_filename, saved_data_transformer = save_RF_model_to_disk(rfc_base,col_transform)
 
 
 
-    
-    # Feature importance 
-    print('\n')
-    print('--- Calculating feature importance')    
-    feature_importance(rfc_base, X_test, y_test, features_names)
-    
+# Feature importance 
+print('\n')
+print('--- Calculating feature importance')    
+sorted_features_names, feature_importances = feature_importance(rfc_base, Xtest, ytest, features_names)
+
   
+
+# Save model performance to JSON file
+save_model_performance_to_json(train_score, test_score, sorted_features_names, feature_importances,
+                               saved_model_filename, saved_data_transformer, outputFile='output_model_performance.json') 
+
+
+
+# PLOT A SINGLE TREE    
+"""
+sing_tree_id = 6;
+
+# Extract single tree
+single_tree_estimator_in_RF = rfc_base.estimators_[sing_tree_id]
     
-        
-    
-    """
+# Export as dot file
+export_graphviz(single_tree_estimator_in_RF, out_file='tree.dot', 
+                feature_names = features_names,
+                class_names = LABEL,
+                rounded = True, proportion = False, 
+                precision = 2, filled = True)
+            
+# Convert to png using system command (requires Graphviz)
+# Copy dot file into: http://www.webgraphviz.com/ Get it rendered there.
+# OR
+# on Windows: command line: dot tree.dot -Tpng -o tree.png
+os.system('dot tree.dot -Tpng -o tree.png')
 
-    # Cross-validation of RF model with default parameters
-    print('\n')
-    print('--- Cross-validation of Random Forest regressor with default parameters')    
-    # choose one of the following cross-validation split approach: KFold, StratifiedKFold, TimeSeriesSplit
-    # cv = KFold(n_splits)
-    cv = StratifiedKFold(n_splits,shuffle=True,random_state=42)
-    # cv = TimeSeriesSplit(n_splits=n_splits) # creating a timeseries split of the datasets
-    RF_Regressor_cross_validate(rfc_base,X,y,cv) 
-
-    # # Find best RF model with randomizedsearch
-    # print('--- Find best RF model with randomizedsearch')    
-    # best_rfc_random = RF_Regressor_randomizedsearch(X_train,X_test,y_train,y_test,cv)
-
-    # print('--- Cross-validation of best RF model with randomizedsearch')    
-    # RF_Regressor_randomizedsearch_cross_validate(best_rfc_random,X,y,cv)
+"""
 
 
-    """
+
+
+"""
+# Cross-validation of RF model with default parameters
+print('\n')
+print('--- Cross-validation of Random Forest regressor with default parameters')    
+# choose one of the following cross-validation split approach: KFold, StratifiedKFold, TimeSeriesSplit
+# cv = KFold(n_splits=10)
+cv = StratifiedKFold(n_splits=10,shuffle=True,random_state=42)
+# cv = TimeSeriesSplit(n_splits=10) # creating a timeseries split of the datasets
+RF_Regressor_cross_validate(rfc_base,X,y,cv) 
+
+# # Find best RF model with randomizedsearch
+# print('--- Find best RF model with randomizedsearch')    
+# best_rfc_random = RF_Regressor_randomizedsearch(X_train,X_test,y_train,y_test,cv)
+
+# print('--- Cross-validation of best RF model with randomizedsearch')    
+# RF_Regressor_randomizedsearch_cross_validate(best_rfc_random,X,y,cv)
+
+
+"""
 
 
 # plt.close('all')  
 
 
-#%% RUN MAIN
-if __name__ == "__main__":
+# #%% RUN MAIN
+# if __name__ == "__main__":
 
-    # Call main function
-    main()
+#     # Call main function
+#     main()
     
 
     
