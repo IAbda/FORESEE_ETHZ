@@ -9,7 +9,7 @@ Model training perfromance    |  1-hour ahead predicions
 
 # FORESEE_ETHZ
 Perform a classification/regression using a Random Forest (RF):
-- We predict the one-hour-ahead traffic intensity level in a unit location. 
+- We predict the k-hour-ahead traffic intensity level in a unit location. 
 - We adopt the following types of features: 
   1) time features, such as hour, day-of-week, and week; 
   2) spatial features, such as location_id; 
