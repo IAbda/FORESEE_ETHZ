@@ -2,3 +2,4 @@
 *.bak
 *.sav
 __pycache__/
+*.pyc
