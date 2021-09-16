@@ -17,8 +17,8 @@ import glob
 import numpy as np
 
 #%%
-saved_model_filename = './saved_models/RF_20210915204354826.sav'
-saved_data_transformer = './saved_models/col_transform_20210915204354826.sav'
+saved_model_filename = './saved_models/RF_20210916115453317.sav'
+saved_data_transformer = './saved_models/col_transform_20210916115453317.sav'
 
 new_Xinput_filename_for_predictions = "./data/new_Xinput_for_predictions.csv"
 file_path_predictions_to_json = './output_model_predictions.json'
@@ -52,9 +52,17 @@ X_transformer = data_transformer.transform(new_X)
 # Predict using loaded model
 ypredict_from_saved_model = model.predict(X_transformer)    
 
-# Visualize predictions on a map-like plot of road locations
-make_plot_map(xcoord,ycoord,locID,ypredict_from_saved_model)    
-
 # Save predictions to JSON file
 save_predictions_to_json(file_path_predictions_to_json,ypredict_from_saved_model)    
+
+# Visualize predictions on a map-like plot of road locations
+xcoord = np.array([])
+is_empty_xcoord = xcoord.size == 0
+is_empty_ycoord = ycoord.size == 0
+
+if is_empty_xcoord or is_empty_xcoord:
+    print('ERROR: Coordinates not fully defined. Cannot plot results on map.')
+else:
+    make_plot_map(xcoord,ycoord,locID,ypredict_from_saved_model)    
+
 
